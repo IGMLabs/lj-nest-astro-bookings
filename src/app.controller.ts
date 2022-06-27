@@ -1,5 +1,17 @@
-import { Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+} from "@nestjs/common";
 import { AppService } from "./app.service";
+import { Client } from "./client.interface";
 
 @Controller("")
 export class AppController {
@@ -8,6 +20,18 @@ export class AppController {
   @Get("")
   public getHello(): string {
     return this.appService.getHello();
+  }
+
+  @Post("")
+  public postHello(@Body() payload: unknown): string {
+    const type = typeof payload;
+    const nameString = JSON.stringify(payload);
+    return `Body: ${payload} of type ${type}; ${nameString}`;
+  }
+
+  @Post("name")
+  public postHelloName(@Body() payload: { name: string }): string {
+    return `Hello ${payload.name}`;
   }
 
   @Get("/test")
@@ -42,5 +66,57 @@ export class AppController {
     const type = typeof someNumber;
     const square = someNumber * someNumber;
     return `Square of ${someNumber} of type ${type} is ${square}; `;
+  }
+
+  @Get("/multiply/:someNumber/:otherNumber")
+  public getMultiply(
+    @Param("someNumber", ParseIntPipe) someNumber: number,
+    @Param("otherNumber", ParseIntPipe) otherNumber: number,
+  ): number {
+    const multiply = this.appService.multiply(someNumber, otherNumber);
+    return multiply;
+  }
+
+  @Get("/multiply/query")
+  public getMultiplyQuery(
+    @Query("a", ParseIntPipe) someNumber: number,
+    @Query("b", ParseIntPipe) otherNumber: number,
+  ): number {
+    return this.appService.multiply(someNumber, otherNumber);
+  }
+
+  @Get("/divide/:someNumber/:otherNumber")
+  public getDivide(
+    @Param("someNumber", ParseIntPipe) someNumber: number,
+    @Param("otherNumber", ParseIntPipe) otherNumber: number,
+  ): number {
+    try {
+      const divide = this.appService.divide(someNumber, otherNumber);
+      return divide;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Get("/squareRoot/:someNumber")
+  getSquareRoot(@Param("someNumber", ParseIntPipe) someNumber: number): number {
+    if (someNumber < 0) throw new HttpException(`${someNumber} is a negative number`, HttpStatus.BAD_REQUEST);
+    return this.appService.squareRoot(someNumber);
+  }
+
+  @Post("client")
+  public postClient(@Body() payload: Client): Client {
+    return this.appService.saveClient(payload);
+  }
+
+  @Put("client/:id")
+  public putClient(@Param("id") clientId: string, @Body() payload: Client): Client {
+    try {
+      return this.appService.updateClient(clientId, payload);
+    } catch (error) {
+      const message: string = error.message;
+      if (message.startsWith("NOT FOUND:")) throw new HttpException(message, HttpStatus.NOT_FOUND);
+      else throw new HttpException(message, HttpStatus.BAD_REQUEST);
+    }
   }
 }
