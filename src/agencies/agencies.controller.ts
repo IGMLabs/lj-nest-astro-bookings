@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, ValidationPipe } from "@nestjs/common";
 import { AgenciesService } from "./agencies.service";
-import { Agency } from "./dto/agency.dto";
-import { CreateAgencyDto } from "./dto/create-agency.dto";
+import { AgencyDto } from "./dto/agency.dto";
+import { Agency } from "./dto/agency.interface";
 
 @Controller("agencies")
 export class AgenciesController {
@@ -11,10 +11,12 @@ export class AgenciesController {
   getAll(): Agency[] {
     return this.agenciesService.selectAll();
   }
+
   @Get("/:id")
   getById(@Param("id") id: string) {
     return this.agenciesService.findById(id);
   }
+
   @Post()
   postAgency(
     @Body(
@@ -23,7 +25,7 @@ export class AgenciesController {
         forbidNonWhitelisted: true,
       }),
     )
-    agency: CreateAgencyDto,
+    agency: AgencyDto,
   ): Agency {
     return this.agenciesService.insert(agency);
   }

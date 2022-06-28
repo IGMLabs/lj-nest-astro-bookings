@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { Agency } from "./dto/agency.dto";
-import { CreateAgencyDto } from "./dto/create-agency.dto";
+import { AgencyDto } from "./dto/agency.dto";
+import { Agency } from "./dto/agency.interface";
 
 @Injectable()
 export class AgenciesService {
@@ -15,7 +15,7 @@ export class AgenciesService {
     return this.agencies.find((agency) => agency.id === id);
   }
 
-  public insert(agency: CreateAgencyDto): Agency {
+  public insert(agency: AgencyDto): Agency {
     const newAgency = {
       id: this.createGUID(),
       ...agency,
