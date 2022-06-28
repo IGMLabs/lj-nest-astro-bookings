@@ -1,19 +1,21 @@
 import { Injectable } from "@nestjs/common";
+import { Agency } from "./dto/agency.dto";
+import { CreateAgencyDto } from "./dto/create-agency.dto";
 
 @Injectable()
 export class AgenciesService {
-  private readonly agencies: Partial<AgencyDto>[] = [];
+  private readonly agencies: Agency[] = [];
   private readonly STRING_BASE = 36;
 
-  public selectAll(): AgencyDto[] {
+  public selectAll(): Agency[] {
     return this.agencies;
   }
 
-  public findById(id: string): Partial<AgencyDto> {
+  public findById(id: string): Agency {
     return this.agencies.find((agency) => agency.id === id);
   }
 
-  public insert(agency: CreateAgencyDto): AgencyDto {
+  public insert(agency: CreateAgencyDto): Agency {
     const newAgency = {
       id: this.createGUID(),
       ...agency,
