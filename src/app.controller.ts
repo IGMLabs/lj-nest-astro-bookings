@@ -10,11 +10,13 @@ import {
   Put,
   Query,
   UseFilters,
+  ValidationPipe,
 } from "@nestjs/common";
 import { AppService } from "./app.service";
-import { Client } from "./client.interface";
 import { BusinessErrorFilter } from "./core/filters/business-error.filter";
 import { PositiveNumberPipe } from "./core/pipes/positive-number.pipe";
+import { ClientDto } from "./models/client.dto";
+import { Client } from "./models/client.interface";
 
 @Controller("")
 export class AppController {
@@ -122,7 +124,15 @@ export class AppController {
   }
 
   @Post("client")
-  public postClient(@Body() payload: Client): Client {
+  public postClient(
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
+    )
+    payload: ClientDto,
+  ): Client {
     return this.appService.saveClient(payload);
   }
 

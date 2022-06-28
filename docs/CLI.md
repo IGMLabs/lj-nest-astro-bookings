@@ -13,4 +13,6 @@ nest g filter core/filters/BusinessError
 
 nest g middleware core/middlewares/monitor
 nest g module core
+
+npm i class-validator class-transformer
 ```
