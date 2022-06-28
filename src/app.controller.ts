@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { AppService } from "./app.service";
 import { Client } from "./client.interface";
+import { PositiveNumberPipe } from "./core/pipes/positive-number.pipe";
 
 @Controller("")
 export class AppController {
@@ -99,8 +100,13 @@ export class AppController {
   }
 
   @Get("/squareRoot/:someNumber")
-  getSquareRoot(@Param("someNumber", ParseIntPipe) someNumber: number): number {
+  public getSquareRoot(@Param("someNumber", ParseIntPipe) someNumber: number): number {
     if (someNumber < 0) throw new HttpException(`${someNumber} is a negative number`, HttpStatus.BAD_REQUEST);
+    return this.appService.squareRoot(someNumber);
+  }
+
+  @Get("/squareRoot/pipe/:someNumber")
+  public getSquareRootPipe(@Param("someNumber", PositiveNumberPipe) someNumber: number): number {
     return this.appService.squareRoot(someNumber);
   }
 
