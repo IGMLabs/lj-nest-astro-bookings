@@ -9,9 +9,11 @@ import {
   Post,
   Put,
   Query,
+  UseFilters,
 } from "@nestjs/common";
 import { AppService } from "./app.service";
 import { Client } from "./client.interface";
+import { BusinessErrorFilter } from "./core/filters/business-error.filter";
 import { PositiveNumberPipe } from "./core/pipes/positive-number.pipe";
 
 @Controller("")
@@ -97,6 +99,15 @@ export class AppController {
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @Get("/divide/filter/:someNumber/:otherNumber")
+  @UseFilters(BusinessErrorFilter)
+  public getDivideFilter(
+    @Param("someNumber", ParseIntPipe) someNumber: number,
+    @Param("otherNumber", ParseIntPipe) otherNumber: number,
+  ): number {
+    return this.appService.divide(someNumber, otherNumber);
   }
 
   @Get("/squareRoot/:someNumber")
