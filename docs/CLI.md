@@ -11,4 +11,6 @@ npx nest new ab-nest-astro-bookings
 nest g pipe core/pipes/positiveNumber
 nest g filter core/filters/BusinessError
 
+nest g middleware core/middlewares/monitor
+nest g module core
 ```
