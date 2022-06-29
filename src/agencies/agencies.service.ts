@@ -1,35 +1,43 @@
 import { Injectable } from "@nestjs/common";
 import { AgencyDto } from "./dto/agency.dto";
 import { Agency } from "./dto/agency.interface";
+import { UtilsService } from '../core/utils/utils.service';
 
 @Injectable()
 export class AgenciesService {
   private readonly agencies: Agency[] = [];
-  private readonly STRING_BASE = 36;
+
+  constructor(private utilsService : UtilsService){}
 
   public selectAll(): Agency[] {
     return this.agencies;
   }
 
   public findById(id: string): Agency {
-    return this.agencies.find((agency) => agency.id === id);
+    const agency: Agency = this.agencies.find((agency) => agency.id === id);
+    if (!agency) {
+      throw new Error(`No existe ninguna agencia con ese id`);
+    }
+    return agency;
   }
 
   public insert(agency: AgencyDto): Agency {
     const newAgency = {
-      id: this.createGUID(),
+      id: this.utilsService.createGUID(),
       ...agency,
     };
     this.agencies.push(newAgency);
     return newAgency;
   }
 
-  private createGUID(): string {
-    const timeStamp = Date.now();
-    const head = timeStamp.toString(this.STRING_BASE);
-    const random = Math.random();
-    const decimalPosition = 2;
-    const tail = random.toString(this.STRING_BASE).substring(decimalPosition);
-    return head + tail;
+  public update(agencyId: string, updateAgency: Agency): Agency {
+    try {
+      const agency = this.findById(agencyId);
+      agency.name= updateAgency.name;
+      return agency;
+    }catch(error){
+      throw new Error(`No existe la agencia que esta tratando de modificar`);
+    }
   }
+
 }

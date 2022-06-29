@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   UseFilters,
+  UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
 import { AppService } from "./app.service";
