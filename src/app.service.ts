@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { ClientDto } from "./models/client.dto";
 import { Client } from "./models/client.interface";
+import { ClientDto } from "./models/client.dto";
 
-export class AppServiceBase {
-  public getHello(): string {
+@Injectable()
+export class AppService {
+  getHello(): string {
     return "Hello World!";
   }
 
@@ -12,13 +13,20 @@ export class AppServiceBase {
     return multiply;
   }
 
-  public divide(someNumber: number, otherNumber: number): number {
+  public division(someNumber: number, otherNumber: number): number {
+    const division = someNumber / otherNumber;
+    return division;
+  }
+
+  public division2(someNumber: number, otherNumber: number): number {
     if (otherNumber === 0) throw new Error(`${otherNumber} is CERO`);
-    return someNumber / otherNumber;
+    const division = someNumber / otherNumber;
+    return division;
   }
 
   public squareRoot(someNumber: number): number {
-    return Math.sqrt(someNumber);
+    const sqrt = Math.sqrt(someNumber);
+    return sqrt;
   }
 
   public saveClient(clientDto: ClientDto): Client {
@@ -29,11 +37,8 @@ export class AppServiceBase {
 
   public updateClient(clientId: string, client: Client): Client {
     if (clientId !== "") {
-      throw new Error("NOT FOUND: " + clientId);
+      throw new Error("Not found: " + clientId);
     }
     return client;
   }
 }
-
-@Injectable()
-export class AppService extends AppServiceBase {}

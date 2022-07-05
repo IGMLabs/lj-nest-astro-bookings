@@ -1,47 +1,62 @@
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
 import { UtilsService } from "src/core/utils/utils.service";
-import { Credentials } from "./models/credentials.interface";
-import { LoginDto } from "./models/login.dto";
-import { RegistrationDto } from "./models/registration.dto";
-import { User } from "./models/user.interface";
+import { Credentials } from "src/models/credentials.interface";
+import { UsuarioDto } from "src/models/usuario.dto";
+import { Usuario } from "src/models/usuario.entity";
+import { LoginDto } from "../models/login.dto";
 
 @Injectable()
 export class AuthService {
-  private readonly users: User[] = [];
+  // private readonly usuarios: Usuario[] = [];
 
-  constructor(private readonly utilsService: UtilsService,private readonly jwtService: JwtService) {}
+  constructor(
+    private utilService: UtilsService,
+    private readonly jwtService: JwtService,
+    @InjectModel(Usuario.name) private readonly userModel: Model<Usuario>,
+  ) {}
 
-  public register(registration: RegistrationDto): Credentials {
-    const user: User = {
-      id: this.utilsService.createGUID(),
-      ...registration,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.push(user);
-    return this.buildCredentials(user);
+  public async login(usuario: LoginDto) {
+    const usuarioDB: Usuario = await this.userModel.findOne({ email: usuario.email, password: usuario.password });
+    if (!usuarioDB) {
+      throw new Error("Usuario o contraseña incorrectos");
+    }
+    return this.buildCredentials(usuarioDB);
   }
 
-  public login(login: LoginDto) {
-    const user: User = this.users.find((u) => u.email === login.email && u.password === login.password);
-    if (!user) throw new Error("Invalid credentials");
-    return this.buildCredentials(user);
+  public async register(usuario: UsuarioDto) {
+    const newUsuario: Usuario = await this.userModel.create({
+      id: this.utilService.createGUID(),
+      ...usuario,
+    });
+
+    await newUsuario.save();
+    return this.buildCredentials(newUsuario);
   }
 
-  private buildCredentials(user: User): Credentials {
-    const credentials: Credentials = {
+  public async getUser(id: string): Promise<Usuario> {
+    const usuarioDB: Usuario = await this.userModel.findOne({ id });
+    if (!usuarioDB) {
+      throw new Error("Usuario o contraseña not found");
+    }
+    return usuarioDB;
+  }
+
+  public buildCredentials(user: Usuario): Credentials {
+    const credentials = {
       id: user.id,
       token: this.createToken(user),
     };
     return credentials;
   }
-  private createToken(user: User): string {
+
+  public createToken(user: Usuario): string {
     const payload = {
       sub: user.id,
     };
-    // return JSON.stringify(payload);
-    const jwtConfig =  { expiresIn: "5m", secret: "secret" };
-    return this.jwtService.sign(payload,jwtConfig);
+    return this.jwtService.sign(payload, { expiresIn: "5m", secret: "secret" });
+    //return JSON.stringify(payload);
   }
 }

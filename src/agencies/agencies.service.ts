@@ -1,43 +1,32 @@
 import { Injectable } from "@nestjs/common";
-import { AgencyDto } from "./dto/agency.dto";
-import { Agency } from "./dto/agency.interface";
-import { UtilsService } from '../core/utils/utils.service';
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { AgencyDto } from "src/models/agency.dto";
+import { Agency } from "src/models/agency.entity";
+import { UtilsService } from "../core/utils/utils.service";
 
 @Injectable()
 export class AgenciesService {
-  private readonly agencies: Agency[] = [];
+  constructor(
+    private utilService: UtilsService,
+    @InjectModel(Agency.name) private readonly agencyModel: Model<Agency>,
+  ) {}
 
-  constructor(private utilsService : UtilsService){}
-
-  public selectAll(): Agency[] {
-    return this.agencies;
+  public async selectAll(): Promise<Agency[]> {
+    return await this.agencyModel.find();
   }
 
-  public findById(id: string): Agency {
-    const agency: Agency = this.agencies.find((agency) => agency.id === id);
-    if (!agency) {
-      throw new Error(`No existe ninguna agencia con ese id`);
-    }
-    return agency;
+  public async findById(id: string): Promise<Agency> {
+    return await this.agencyModel.findById(id);
   }
 
-  public insert(agency: AgencyDto): Agency {
-    const newAgency = {
-      id: this.utilsService.createGUID(),
+  public async insert(agency: AgencyDto) {
+    const newAgency: Agency = await this.agencyModel.create({
+      id: this.utilService.createGUID(),
       ...agency,
-    };
-    this.agencies.push(newAgency);
+    });
+
+    await newAgency.save();
     return newAgency;
   }
-
-  public update(agencyId: string, updateAgency: Agency): Agency {
-    try {
-      const agency = this.findById(agencyId);
-      agency.name= updateAgency.name;
-      return agency;
-    }catch(error){
-      throw new Error(`No existe la agencia que esta tratando de modificar`);
-    }
-  }
-
 }

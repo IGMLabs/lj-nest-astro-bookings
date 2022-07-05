@@ -10,34 +10,21 @@ import {
   Put,
   Query,
   UseFilters,
-  UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
 import { AppService } from "./app.service";
+import { Client } from "./models/client.interface";
 import { BusinessErrorFilter } from "./core/filters/business-error.filter";
 import { PositiveNumberPipe } from "./core/pipes/positive-number.pipe";
 import { ClientDto } from "./models/client.dto";
-import { Client } from "./models/client.interface";
 
-@Controller("")
+@Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get("")
-  public getHello(): string {
+  @Get()
+  getHello(): string {
     return this.appService.getHello();
-  }
-
-  @Post("")
-  public postHello(@Body() payload: unknown): string {
-    const type = typeof payload;
-    const nameString = JSON.stringify(payload);
-    return `Body: ${payload} of type ${type}; ${nameString}`;
-  }
-
-  @Post("name")
-  public postHelloName(@Body() payload: { name: string }): string {
-    return `Hello ${payload.name}`;
   }
 
   @Get("/test")
@@ -58,20 +45,22 @@ export class AppController {
     return `Square of ${someParam} of type ${type} is ${square}`;
   }
 
-  @Get("/square/Nan/:someParam")
-  public getSquareNan(@Param("someParam") someParam: number): string {
+  @Get("/square/NaN/:someParam")
+  public getSquareNaN(@Param("someParam") someParam: number): string {
     const someNumber = parseInt(someParam.toString());
-    if (isNaN(someNumber)) throw new HttpException(`${someParam} is not a number`, HttpStatus.BAD_REQUEST);
+    if (isNaN(someNumber)) {
+      throw new HttpException(`${someParam} is not a number`, HttpStatus.BAD_REQUEST);
+    }
     const type = typeof someNumber;
     const square = someNumber * someNumber;
-    return `Square of ${someNumber} of type ${type} is ${square}; `;
+    return `Square of ${someNumber} of type ${type} is ${square}`;
   }
 
   @Get("/square/pipe/:someParam")
   public getSquarePipe(@Param("someParam", ParseIntPipe) someNumber: number): string {
     const type = typeof someNumber;
     const square = someNumber * someNumber;
-    return `Square of ${someNumber} of type ${type} is ${square}; `;
+    return `Square of ${someNumber} of type ${type} is ${square}`;
   }
 
   @Get("/multiply/:someNumber/:otherNumber")
@@ -79,7 +68,7 @@ export class AppController {
     @Param("someNumber", ParseIntPipe) someNumber: number,
     @Param("otherNumber", ParseIntPipe) otherNumber: number,
   ): number {
-    const multiply = this.appService.multiply(someNumber, otherNumber);
+    const multiply = someNumber * otherNumber;
     return multiply;
   }
 
@@ -91,37 +80,49 @@ export class AppController {
     return this.appService.multiply(someNumber, otherNumber);
   }
 
-  @Get("/divide/:someNumber/:otherNumber")
-  public getDivide(
-    @Param("someNumber", ParseIntPipe) someNumber: number,
-    @Param("otherNumber", ParseIntPipe) otherNumber: number,
+  @Get("/division/query")
+  public getDivisionQuery(
+    @Query("a", ParseIntPipe) someNumber: number,
+    @Query("b", ParseIntPipe) otherNumber: number,
   ): number {
-    try {
-      const divide = this.appService.divide(someNumber, otherNumber);
-      return divide;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    if (someNumber == 0 || otherNumber == 0) {
+      throw new HttpException(`${someNumber} and/or ${otherNumber} are under 1`, HttpStatus.BAD_REQUEST);
     }
+    return this.appService.division(someNumber, otherNumber);
   }
 
-  @Get("/divide/filter/:someNumber/:otherNumber")
+  @Get("/division/filter/query")
   @UseFilters(BusinessErrorFilter)
-  public getDivideFilter(
-    @Param("someNumber", ParseIntPipe) someNumber: number,
-    @Param("otherNumber", ParseIntPipe) otherNumber: number,
+  public getDivisionQueryFilter(
+    @Query("a", ParseIntPipe) someNumber: number,
+    @Query("b", ParseIntPipe) otherNumber: number,
   ): number {
-    return this.appService.divide(someNumber, otherNumber);
+    return this.appService.division2(someNumber, otherNumber);
   }
 
-  @Get("/squareRoot/:someNumber")
-  public getSquareRoot(@Param("someNumber", ParseIntPipe) someNumber: number): number {
-    if (someNumber < 0) throw new HttpException(`${someNumber} is a negative number`, HttpStatus.BAD_REQUEST);
+  @Get("/squareRoot/query")
+  public getSquareRootQuery(@Query("a", ParseIntPipe) someNumber: number): number {
+    if (someNumber < 1) {
+      throw new HttpException(`${someNumber} is under 1`, HttpStatus.BAD_REQUEST);
+    }
     return this.appService.squareRoot(someNumber);
   }
 
-  @Get("/squareRoot/pipe/:someNumber")
-  public getSquareRootPipe(@Param("someNumber", PositiveNumberPipe) someNumber: number): number {
+  @Get("/squareRoot/pipe/query")
+  public getSquareRootQueryPipe(@Query("a", PositiveNumberPipe) someNumber: number): number {
     return this.appService.squareRoot(someNumber);
+  }
+
+  @Post("")
+  public postHello(@Body() nombre: { name: string }): string {
+    const type = typeof nombre;
+    const nameString = JSON.stringify(nombre);
+    return `${nombre} of type ${type} but is a ${nameString}`;
+  }
+
+  @Post("name")
+  public postHelloName(@Body() payload: { name: string }): string {
+    return `Hello ${payload.name}`;
   }
 
   @Post("client")
@@ -140,10 +141,10 @@ export class AppController {
   @Put("client/:id")
   public putClient(@Param("id") clientId: string, @Body() payload: Client): Client {
     try {
-      return this.appService.updateClient(clientId, payload);
+      return this.appService.saveClient(payload);
     } catch (error) {
       const message: string = error.message;
-      if (message.startsWith("NOT FOUND:")) throw new HttpException(message, HttpStatus.NOT_FOUND);
+      if (message.startsWith("Not found:")) throw new HttpException(message, HttpStatus.NOT_FOUND);
       else throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
