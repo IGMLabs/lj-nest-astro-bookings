@@ -1,11 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { Booking } from './entities/booking.entity';
+import { UtilsService } from '../core/utils/utils.service';
+import { Repository, EntityNotFoundError, Connection } from 'typeorm';
+import { Trip } from '../trips/entities/trip.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class BookingsService {
-  create(createBookingDto: CreateBookingDto) {
-    return 'This action adds a new booking';
+
+  constructor(
+    private utilService: UtilsService,
+    @InjectRepository(Booking) private bookingRepository: Repository<Booking>,
+    @InjectRepository(Trip) private tripRepository: Repository<Trip>,
+    private connection: Connection
+  ) { }
+
+  async create(createBookingDto: CreateBookingDto): Promise<Booking> {
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.connect();
+    const booking: Booking = this.bookingRepository.create(createBookingDto);
+    try {
+      await queryRunner.startTransaction();
+      const trip: Trip = await this.tripRepository.findOneBy({ id: createBookingDto.tripId })
+      this.bookTripPlaces(trip, createBookingDto, booking);
+      await this.tripRepository.save(trip);
+      await this.bookingRepository.save(booking);
+      await queryRunner.commitTransaction();
+    } catch (dbError) {
+      await queryRunner.rollbackTransaction();
+      throw dbError;
+    } finally {
+      await queryRunner.release();
+    }
+    return booking;
+  }
+
+  private bookTripPlaces(trip: Trip, createBookingDto: CreateBookingDto, booking: Booking) {
+    if (!trip)
+      throw new EntityNotFoundError(Trip, createBookingDto.tripId);
+    if (trip.places < createBookingDto.passengers)
+      throw new Error("BUSSINES: Not enought places");
+    trip.places -= createBookingDto.passengers;
+    booking.id = this.utilService.createGUID();
+    booking.trip = trip;
   }
 
   findAll() {
