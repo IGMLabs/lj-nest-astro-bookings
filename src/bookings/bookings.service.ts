@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { Booking } from './entities/booking.entity';
@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class BookingsService {
+  private logger = new Logger("BookingsService");
 
   constructor(
     private utilService: UtilsService,
@@ -30,6 +31,7 @@ export class BookingsService {
       await queryRunner.commitTransaction();
     } catch (dbError) {
       await queryRunner.rollbackTransaction();
+      this.logger.error(dbError);
       throw dbError;
     } finally {
       await queryRunner.release();
